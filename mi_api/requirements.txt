@@ -1,0 +1,37 @@
+# Framework web
+fastapi==0.95.2
+uvicorn[standard]==0.21.0
+
+# Base de datos
+sqlalchemy==1.4.46
+pymysql==1.0.2
+cryptography==40.0.2
+
+# Autenticación y seguridad
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+pydantic==1.10.11
+pydantic[email]==1.10.11
+
+# JWT
+pyjwt==2.8.0
+
+# Utilidades
+python-multipart==0.0.6
+python-dotenv==1.0.0
+
+# Desarrollo (opcional)
+pytest==7.4.0
+pytest-asyncio==0.21.1
+httpx==0.24.1
+
+fastapi==0.104.1
+uvicorn==0.24.0
+sqlalchemy==2.0.23
+pymysql==1.1.0
+python-dotenv==1.0.0
+passlib==1.7.4
+bcrypt==4.1.2
+pyjwt==2.8.0
+pydantic==2.5.0
