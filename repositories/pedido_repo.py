@@ -36,6 +36,7 @@ def create(
         precio_total=precio_total,
         metodo_pago=metodo_pago,
         id_comprador=id_comprador,
+        estado="pendiente",
     )
     db.add(pedido)
     db.flush()
@@ -58,7 +59,21 @@ def create(
 
 
 def get_all(db: Session) -> List[Pedido]:
-    return db.query(Pedido).options(joinedload(Pedido.items)).all()
+    return (
+        db.query(Pedido)
+        .options(joinedload(Pedido.items), joinedload(Pedido.comprador))
+        .order_by(Pedido.id_pedido.desc())
+        .all()
+    )
+
+
+def update_estado(db: Session, id_pedido: int, estado: str) -> Optional[Pedido]:
+    pedido = get_by_id(db, id_pedido)
+    if pedido:
+        pedido.estado = estado
+        db.commit()
+        db.refresh(pedido)
+    return pedido
 
 
 def delete(db: Session, id_pedido: int) -> bool:

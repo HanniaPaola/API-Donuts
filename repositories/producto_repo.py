@@ -1,22 +1,34 @@
 # repositories/producto_repo.py
 from typing import List, Optional, Dict
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from models.producto import Producto
+
+
+def _with_catalog_relations(query):
+    return query.options(
+        joinedload(Producto.admin),
+        joinedload(Producto.colaborador),
+    )
+
 
 def get_by_id(db: Session, id_producto: int) -> Optional[Producto]:
     return db.query(Producto).filter(Producto.id_producto == id_producto).first()
 
 def get_all(db: Session) -> List[Producto]:
-    return db.query(Producto).all()
+    return _with_catalog_relations(db.query(Producto)).all()
 
 def get_by_admin_id(db: Session, id_admin: int) -> List[Producto]:
-    return db.query(Producto).filter(Producto.id_admin == id_admin).all()
+    return (
+        _with_catalog_relations(
+            db.query(Producto).filter(Producto.id_admin == id_admin),
+        ).all()
+    )
 
 def get_by_colaborador_id(db: Session, id_colaborador: int) -> List[Producto]:
     return (
-        db.query(Producto)
-        .filter(Producto.id_colaborador == id_colaborador)
-        .all()
+        _with_catalog_relations(
+            db.query(Producto).filter(Producto.id_colaborador == id_colaborador),
+        ).all()
     )
 
 def get_by_categoria(db: Session, categoria: str) -> List[Producto]:

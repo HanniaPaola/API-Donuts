@@ -21,7 +21,8 @@ from .carrito import (
 )
 from .pedido import (
     PedidoCreate,
-    PedidoResponse
+    PedidoEstadoUpdate,
+    PedidoResponse,
 )
 from .colaborador import (
     ColaboradorResponse,

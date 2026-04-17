@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from database import get_db
+from repositories import usuario_admin_repo
 from schemas import (
     UsuarioAdminCreate,
     UsuarioAdminLogin,
@@ -49,6 +50,16 @@ def login_admin(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(e),
         )
+
+
+@router.get("/contacto-chat", response_model=dict)
+def contacto_chat_colaboracion(db: Session = Depends(get_db)):
+    """Identificador público (mismo valor que `nombre` en login) para salas comprador–admin. Sin credenciales."""
+    admins = usuario_admin_repo.get_all(db)
+    if not admins:
+        return {"peer_id": ""}
+    admins.sort(key=lambda a: a.id_admin)
+    return {"peer_id": admins[0].nombre}
 
 
 @router.get("/{id_admin}", response_model=UsuarioAdminResponse)

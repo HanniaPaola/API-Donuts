@@ -25,6 +25,8 @@ def _producto_item_lista_publica(p: Producto) -> Dict:
     col_nombre = "—"
     if p.colaborador is not None:
         col_nombre = p.colaborador.display_name
+    elif p.admin is not None and p.admin.nombre:
+        col_nombre = p.admin.nombre
     return {
         "id": p.id_producto,
         "nombre": p.nombre,

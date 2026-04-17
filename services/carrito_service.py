@@ -12,6 +12,7 @@ from repositories.carrito import (
     get_producto_en_carrito,
     get_productos_carrito,
     quitar_producto,
+    vaciar_carrito,
 )
 from repositories.producto_repo import get_by_id as get_producto_by_id
 from repositories.usuario_comprador_repo import get_by_id as get_comprador_by_id
@@ -119,6 +120,20 @@ def agregar_al_carrito(
         "cantidad_items": carrito_actualizado.cantidad_items,
         "mensaje": "Producto agregado al carrito",
     }
+
+
+def vaciar_mi_carrito(db: Session, id_comprador: int) -> Dict:
+    """Elimina todas las líneas del carrito del comprador (p. ej. antes de sincronizar con el front)."""
+    comprador = get_comprador_by_id(db, id_comprador)
+    if not comprador:
+        raise ValueError(f"Comprador con ID {id_comprador} no encontrado")
+
+    carrito = get_by_comprador_id(db, id_comprador)
+    if not carrito:
+        return {"mensaje": "Sin carrito", "id_carrito": None}
+
+    vaciar_carrito(db, carrito.id_carrito)
+    return {"mensaje": "Carrito vaciado", "id_carrito": carrito.id_carrito}
 
 
 def quitar_del_carrito(db: Session, id_comprador: int, id_producto: int) -> Dict:

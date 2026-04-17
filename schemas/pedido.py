@@ -1,6 +1,13 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Literal
 from datetime import datetime
+
+
+EstadoPedidoLiteral = Literal["pendiente", "en_camino", "entregado", "cancelado"]
+
+
+class PedidoEstadoUpdate(BaseModel):
+    estado: EstadoPedidoLiteral = Field(..., description="Nuevo estado del pedido")
 
 class PedidoCreate(BaseModel):
     metodo_pago: str = Field(..., description="Método de pago (transferencia, tarjeta, efectivo, etc)")

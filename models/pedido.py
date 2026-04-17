@@ -13,6 +13,7 @@ class Pedido(Base):
     precio_total = Column(Float, nullable=False)
     metodo_pago = Column(String(50), nullable=False)
     id_comprador = Column(Integer, ForeignKey("usuario_comprador.id_comprador"), nullable=False)
+    estado = Column(String(32), nullable=False, default="pendiente")
 
     comprador = relationship("UsuarioComprador", back_populates="pedidos")
     items = relationship(

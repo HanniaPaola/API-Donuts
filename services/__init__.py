@@ -1,5 +1,10 @@
-from services.carrito_service import obtener_carrito, agregar_al_carrito, quitar_del_carrito
-from services.pedido_service import crear_pedido, obtener_historial_pedidos, obtener_detalle_pedido
+from services.carrito_service import obtener_carrito, agregar_al_carrito, quitar_del_carrito, vaciar_mi_carrito
+from services.pedido_service import (
+    crear_pedido,
+    obtener_historial_pedidos,
+    obtener_detalle_pedido,
+    obtener_historial_admin,
+)
 from services.producto_service import obtener_producto, obtener_todos_productos, crear_producto, actualizar_producto, eliminar_producto
 from services.usuario_admin_service import registrar_admin, login_admin, obtener_admin
 from services.usuario_comprador_service import registrar_comprador, login_comprador, obtener_comprador, obtener_todos_compradores, obtener_detalle_comprador

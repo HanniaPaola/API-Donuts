@@ -48,3 +48,14 @@ def quitar_del_carrito(
         return carrito_service.quitar_del_carrito(db, id_comprador, id_producto)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.delete("/vaciar", response_model=dict)
+def vaciar_mi_carrito(
+    db: Session = Depends(get_db),
+    id_comprador: int = Depends(require_buyer_id),
+):
+    try:
+        return carrito_service.vaciar_mi_carrito(db, id_comprador)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
