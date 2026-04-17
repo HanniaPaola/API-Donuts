@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from models.chat_mensaje import ChatMensaje
 from repositories import chat_mensaje_repo
 from repositories import usuario_admin_repo
+from repositories.colaborador_repo import ColaboradorRepository
 
 
 def _participants_from_room(room: str) -> tuple[str, str]:
@@ -35,6 +36,13 @@ def _actor_es_admin_registrado(db: Session, actor_nombre: str) -> bool:
     return usuario_admin_repo.get_by_nombre(db, n) is not None
 
 
+def _actor_es_colaborador_activo_por_email(db: Session, email_lower: str) -> bool:
+    c = ColaboradorRepository.get_by_email(db, email_lower)
+    if not c:
+        return False
+    return (c.status or "active").strip().lower() == "active"
+
+
 def actor_allowed_in_room(room: str, actor_nombre: str, db: Session) -> bool:
     try:
         a, b = _participants_from_room(room)
@@ -46,6 +54,8 @@ def actor_allowed_in_room(room: str, actor_nombre: str, db: Session) -> bool:
         return True
     peer = _contacto_chat_peer_nombre_lower(db)
     if peer and peer in (a_l, b_l) and _actor_es_admin_registrado(db, actor_nombre):
+        return True
+    if peer and peer in (a_l, b_l) and _actor_es_colaborador_activo_por_email(db, actor):
         return True
     return False
 

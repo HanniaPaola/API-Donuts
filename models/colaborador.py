@@ -8,6 +8,7 @@ class Colaborador(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     email = Column(String(120), unique=True, nullable=False, index=True)
+    contrasena = Column(String(255), nullable=True)
     display_name = Column(String(100), nullable=False)
     handle = Column(String(50), unique=True, nullable=False)
     bio = Column(String(500), nullable=True)

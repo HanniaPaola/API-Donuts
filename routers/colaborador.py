@@ -4,8 +4,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from database import get_db
-from deps import optional_buyer_id, require_admin_id
-from schemas.colaborador import ColaboradorCreate, ColaboradorUpdate, CollaboratorPublic
+from deps import optional_buyer_id, require_admin_id, require_colaborador_id
+from schemas.colaborador import (
+    ColaboradorActivarCuenta,
+    ColaboradorCreate,
+    ColaboradorLogin,
+    ColaboradorUpdate,
+    CollaboratorPublic,
+)
 from schemas.postulacion_colaborador import PostulacionColaboradorCreate, PostulacionColaboradorEstadoUpdate
 from services.colaborador_service import ColaboradorService
 from services.postulacion_colaborador_service import (
@@ -13,9 +19,47 @@ from services.postulacion_colaborador_service import (
     crear_postulacion,
     listar_postulaciones_admin,
 )
-from services.producto_service import obtener_productos_menu_colaborador
+from services.producto_service import (
+    obtener_mis_productos_colaborador,
+    obtener_productos_menu_colaborador,
+)
 
 router = APIRouter(prefix="/colaboradores", tags=["Colaboradores"])
+
+
+@router.post("/login", response_model=dict)
+def login_colaborador_panel(
+    datos: ColaboradorLogin,
+    db: Session = Depends(get_db),
+):
+    try:
+        return ColaboradorService.login_colaborador(
+            db,
+            str(datos.email).strip().lower(),
+            datos.contrasena,
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e),
+        )
+
+
+@router.post("/activar-cuenta", response_model=CollaboratorPublic, status_code=status.HTTP_201_CREATED)
+def activar_cuenta_colaborador(
+    datos: ColaboradorActivarCuenta,
+    db: Session = Depends(get_db),
+):
+    """Registro público: mismo correo que la postulación, solo si el estado es «aceptada»."""
+    try:
+        return ColaboradorService.activar_cuenta_desde_postulacion(
+            db,
+            str(datos.email),
+            datos.contrasena,
+            datos.handle,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.post("/postulaciones", response_model=dict, status_code=status.HTTP_201_CREATED)
@@ -72,6 +116,18 @@ def get_online_colaboradores(db: Session = Depends(get_db)):
     return ColaboradorService.get_online_colaboradores(db)
 
 
+@router.get("/mis-productos", response_model=List[dict])
+def listar_mis_productos_colaborador_autenticado(
+    db: Session = Depends(get_db),
+    id_colaborador: int = Depends(require_colaborador_id),
+):
+    """Menú del colaborador en sesión (JWT). Ruta fija antes de `/{colaborador_id}` para evitar colisiones."""
+    try:
+        return obtener_mis_productos_colaborador(db, id_colaborador)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
 @router.get("/", response_model=List[CollaboratorPublic])
 def get_all_colaboradores(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     try:
@@ -82,7 +138,12 @@ def get_all_colaboradores(skip: int = 0, limit: int = 100, db: Session = Depends
 
 
 @router.post("/", response_model=CollaboratorPublic, status_code=status.HTTP_201_CREATED)
-def create_colaborador(colaborador_data: ColaboradorCreate, db: Session = Depends(get_db)):
+def create_colaborador(
+    colaborador_data: ColaboradorCreate,
+    db: Session = Depends(get_db),
+    _id_admin: int = Depends(require_admin_id),
+):
+    """Alta manual de colaborador (admin). El flujo típico es postulación aceptada + POST /activar-cuenta."""
     try:
         return ColaboradorService.create_colaborador(db, colaborador_data)
     except ValueError as e:

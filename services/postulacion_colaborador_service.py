@@ -10,6 +10,21 @@ from services.colaborador_service import VALID_SPECIALTIES
 logger = logging.getLogger(__name__)
 
 
+def _fila_postulacion_a_dict(r) -> Dict:
+    """Misma forma que cada elemento de `listar_postulaciones_admin`."""
+    return {
+        "id": r.id,
+        "id_comprador": r.id_comprador,
+        "nombre_completo": r.nombre_completo,
+        "email": r.email,
+        "telefono": r.telefono,
+        "specialty": r.specialty,
+        "mensaje": r.mensaje,
+        "estado": r.estado or "pendiente",
+        "creado_en": r.creado_en.isoformat() if r.creado_en else "",
+    }
+
+
 def crear_postulacion(
     db: Session,
     nombre_completo: str,
@@ -61,21 +76,7 @@ def crear_postulacion(
 
 def listar_postulaciones_admin(db: Session) -> Dict:
     rows = postulacion_colaborador_repo.list_all_ordered(db)
-    items: List[Dict] = []
-    for r in rows:
-        items.append(
-            {
-                "id": r.id,
-                "id_comprador": r.id_comprador,
-                "nombre_completo": r.nombre_completo,
-                "email": r.email,
-                "telefono": r.telefono,
-                "specialty": r.specialty,
-                "mensaje": r.mensaje,
-                "estado": r.estado or "pendiente",
-                "creado_en": r.creado_en.isoformat() if r.creado_en else "",
-            }
-        )
+    items: List[Dict] = [_fila_postulacion_a_dict(r) for r in rows]
     return {"postulaciones": items, "total": len(items)}
 
 

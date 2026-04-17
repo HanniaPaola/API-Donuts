@@ -16,9 +16,20 @@ from repositories.producto_repo import (
     get_by_id,
     update,
 )
+from repositories import usuario_admin_repo
 from repositories.usuario_admin_repo import get_by_id as get_admin_by_id
 
 logger = logging.getLogger(__name__)
+
+
+def _primer_id_admin(db: Session) -> int:
+    admins = usuario_admin_repo.get_all(db)
+    if not admins:
+        raise ValueError(
+            "No hay administrador registrado; hace falta uno para asociar productos de colaboradores."
+        )
+    admins.sort(key=lambda a: a.id_admin)
+    return admins[0].id_admin
 
 
 def _producto_item_lista_publica(p: Producto) -> Dict:
@@ -64,6 +75,14 @@ def obtener_todos_productos(db: Session) -> List[Dict]:
 
 def obtener_mis_productos_admin(db: Session, id_admin: int) -> List[Dict]:
     productos = get_by_admin_id(db, id_admin)
+    return [_producto_item_lista_publica(p) for p in productos]
+
+
+def obtener_mis_productos_colaborador(db: Session, id_colaborador: int) -> List[Dict]:
+    col = ColaboradorRepository.get_by_id(db, id_colaborador)
+    if not col:
+        raise ValueError(f"Colaborador con id {id_colaborador} no encontrado")
+    productos = get_by_colaborador_id(db, id_colaborador)
     return [_producto_item_lista_publica(p) for p in productos]
 
 
@@ -145,6 +164,31 @@ def crear_producto(
     }
 
 
+def crear_producto_colaborador(
+    db: Session,
+    nombre: str,
+    precio: float,
+    categoria: Optional[str],
+    stock_disponible: int,
+    id_colaborador: int,
+) -> Dict:
+    col = ColaboradorRepository.get_by_id(db, id_colaborador)
+    if not col:
+        raise ValueError(f"Colaborador con id {id_colaborador} no encontrado")
+    if (col.status or "active").strip().lower() != "active":
+        raise ValueError("Colaborador inactivo")
+    id_admin = _primer_id_admin(db)
+    return crear_producto(
+        db,
+        nombre,
+        precio,
+        categoria,
+        stock_disponible,
+        id_admin,
+        id_colaborador,
+    )
+
+
 def actualizar_producto(db: Session, id_producto: int, datos: Dict, id_admin: int) -> Dict:
     producto = get_by_id(db, id_producto)
     if not producto:
@@ -200,6 +244,63 @@ def eliminar_producto(db: Session, id_producto: int, id_admin: int) -> Dict:
     delete(db, id_producto)
 
     logger.info("Producto eliminado id_producto=%s", id_producto)
+
+    return {
+        "id_producto": id_producto,
+        "mensaje": "Producto eliminado exitosamente",
+    }
+
+
+def actualizar_producto_colaborador(
+    db: Session, id_producto: int, datos: Dict, id_colaborador: int
+) -> Dict:
+    producto = get_by_id(db, id_producto)
+    if not producto:
+        raise ValueError(f"Producto con ID {id_producto} no encontrado")
+    if producto.id_colaborador != id_colaborador:
+        raise ValueError("No tienes permiso para actualizar este producto")
+
+    if "precio" in datos and datos["precio"] is not None:
+        if datos["precio"] <= 0:
+            raise ValueError("El precio debe ser mayor a 0")
+
+    if "stock_disponible" in datos and datos["stock_disponible"] is not None:
+        if datos["stock_disponible"] < 0:
+            raise ValueError("El stock no puede ser negativo")
+
+    datos_filtrados: Dict = {}
+    for k, v in datos.items():
+        if k == "id_colaborador":
+            continue
+        if v is not None:
+            datos_filtrados[k] = v
+
+    producto_actualizado = update(db, id_producto, datos_filtrados)
+
+    logger.info("Producto actualizado por colaborador id_producto=%s", id_producto)
+
+    return {
+        "id_producto": producto_actualizado.id_producto,
+        "nombre": producto_actualizado.nombre,
+        "precio": producto_actualizado.precio,
+        "categoria": producto_actualizado.categoria,
+        "stock_disponible": producto_actualizado.stock_disponible,
+        "id_admin": producto_actualizado.id_admin,
+        "id_colaborador": producto_actualizado.id_colaborador,
+        "mensaje": "Producto actualizado exitosamente",
+    }
+
+
+def eliminar_producto_colaborador(db: Session, id_producto: int, id_colaborador: int) -> Dict:
+    producto = get_by_id(db, id_producto)
+    if not producto:
+        raise ValueError(f"Producto con ID {id_producto} no encontrado")
+    if producto.id_colaborador != id_colaborador:
+        raise ValueError("No tienes permiso para eliminar este producto")
+
+    delete(db, id_producto)
+
+    logger.info("Producto eliminado por colaborador id_producto=%s", id_producto)
 
     return {
         "id_producto": id_producto,

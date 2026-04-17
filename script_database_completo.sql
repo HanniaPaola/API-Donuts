@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS usuario_comprador (
 CREATE TABLE IF NOT EXISTS colaboradores (
     id INT PRIMARY KEY AUTO_INCREMENT,
     email VARCHAR(120) NOT NULL UNIQUE,
+    contrasena VARCHAR(255) NULL,
     display_name VARCHAR(100) NOT NULL,
     handle VARCHAR(50) NOT NULL UNIQUE,
     bio VARCHAR(500),

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, EmailStr
 from typing import List, Optional
 
 
@@ -19,7 +19,24 @@ class ColaboradorBase(BaseModel):
 class ColaboradorCreate(ColaboradorBase):
     """Schema for creating a new collaborator"""
 
-    pass
+    contrasena: str = Field(..., min_length=6, description="Contraseña para el panel del colaborador")
+
+
+class ColaboradorLogin(BaseModel):
+    email: EmailStr
+    contrasena: str
+
+
+class ColaboradorActivarCuenta(BaseModel):
+    """Activa la cuenta de colaborador con el mismo correo de una postulación aceptada."""
+
+    email: EmailStr
+    contrasena: str = Field(..., min_length=6)
+    handle: Optional[str] = Field(
+        None,
+        max_length=50,
+        description="Opcional. Si no envías, se genera uno único a partir del correo.",
+    )
 
 
 class ColaboradorUpdate(BaseModel):

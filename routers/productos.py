@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from database import get_db
-from deps import require_admin_id
+from deps import require_admin_id, require_colaborador_id
 from schemas import ProductoCreate, ProductoUpdate, ProductoResponse
 from services import producto_service
 
@@ -19,6 +19,38 @@ def mis_productos(
 ):
     """Productos creados por el administrador autenticado (JWT)."""
     return producto_service.obtener_mis_productos_admin(db, id_admin)
+
+
+@router.get("/mios-colaborador", response_model=List[dict])
+def mis_productos_colaborador(
+    db: Session = Depends(get_db),
+    id_colaborador: int = Depends(require_colaborador_id),
+):
+    """Productos asignados al colaborador autenticado (`id_colaborador`)."""
+    try:
+        return producto_service.obtener_mis_productos_colaborador(db, id_colaborador)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/colaborador", response_model=dict, status_code=status.HTTP_201_CREATED)
+def crear_producto_colaborador(
+    datos: ProductoCreate,
+    db: Session = Depends(get_db),
+    id_colaborador: int = Depends(require_colaborador_id),
+):
+    """Alta de platillo: queda ligado al colaborador en sesión (ignora `id_colaborador` del cuerpo)."""
+    try:
+        return producto_service.crear_producto_colaborador(
+            db,
+            datos.nombre,
+            datos.precio,
+            datos.categoria,
+            datos.stock_disponible,
+            id_colaborador,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.get("/", response_model=List[dict])
@@ -80,5 +112,35 @@ def eliminar_producto(
 ):
     try:
         return producto_service.eliminar_producto(db, id_producto, id_admin)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.put("/{id_producto}/colaborador", response_model=dict)
+def actualizar_producto_colaborador(
+    id_producto: int,
+    datos: ProductoUpdate,
+    db: Session = Depends(get_db),
+    id_colaborador: int = Depends(require_colaborador_id),
+):
+    try:
+        return producto_service.actualizar_producto_colaborador(
+            db,
+            id_producto,
+            datos.model_dump(exclude_unset=True),
+            id_colaborador,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.delete("/{id_producto}/colaborador", response_model=dict)
+def eliminar_producto_colaborador(
+    id_producto: int,
+    db: Session = Depends(get_db),
+    id_colaborador: int = Depends(require_colaborador_id),
+):
+    try:
+        return producto_service.eliminar_producto_colaborador(db, id_producto, id_colaborador)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

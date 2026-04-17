@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from auth import verify_token
 from database import get_db
 from repositories import usuario_admin_repo, usuario_comprador_repo
+from repositories.colaborador_repo import ColaboradorRepository
 
 security = HTTPBearer()
 security_optional = HTTPBearer(auto_error=False)
@@ -67,6 +68,21 @@ def require_admin_id(payload: dict = Depends(_jwt_payload)) -> int:
         ) from exc
 
 
+def require_colaborador_id(payload: dict = Depends(_jwt_payload)) -> int:
+    if payload.get("role") != "collaborator":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Se requiere sesión de colaborador",
+        )
+    try:
+        return int(payload["sub"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token inválido",
+        ) from exc
+
+
 def require_chat_actor_nombre(
     db: Session = Depends(get_db),
     payload: dict = Depends(_jwt_payload),
@@ -99,7 +115,16 @@ def require_chat_actor_nombre(
             )
         return u.nombre
 
+    if role == "collaborator":
+        c = ColaboradorRepository.get_by_id(db, uid)
+        if not c:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Usuario no encontrado",
+            )
+        return c.email.strip().lower()
+
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
-        detail="Solo comprador o administrador pueden usar el chat",
+        detail="Solo comprador, administrador o colaborador pueden usar el chat",
     )
