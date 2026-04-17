@@ -1,0 +1,8 @@
+.env
+venv/
+env/
+venv/
+.venv/
+script_colaboradores.sql
+script_bd.sql
+__pycache__/

@@ -1,13 +1,16 @@
 from typing import Optional, Dict
-
+import os
 from datetime import datetime, timedelta
 
 import jwt
 from passlib.context import CryptContext
+from dotenv import load_dotenv
 
-SECRET_KEY = "tu_clave_secreta_super_segura_cambiar_en_produccion"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 1440  # 24 horas
+load_dotenv()
+
+SECRET_KEY = os.environ["SECRET_KEY"]
+ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
