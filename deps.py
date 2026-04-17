@@ -8,6 +8,7 @@ from database import get_db
 from repositories import usuario_admin_repo, usuario_comprador_repo
 
 security = HTTPBearer()
+security_optional = HTTPBearer(auto_error=False)
 
 
 def _jwt_payload(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
@@ -19,6 +20,21 @@ def _jwt_payload(credentials: HTTPAuthorizationCredentials = Depends(security)) 
             detail="Token inválido o expirado",
         )
     return payload
+
+
+def optional_buyer_id(
+    credentials: HTTPAuthorizationCredentials | None = Depends(security_optional),
+) -> int | None:
+    """Si hay Bearer válido de comprador, devuelve id_comprador; si no, None (sin error)."""
+    if credentials is None:
+        return None
+    payload = verify_token(credentials.credentials)
+    if not payload or payload.get("role") != "buyer":
+        return None
+    try:
+        return int(payload["sub"])
+    except (KeyError, TypeError, ValueError):
+        return None
 
 
 def require_buyer_id(payload: dict = Depends(_jwt_payload)) -> int:

@@ -31,3 +31,9 @@ from .colaborador import (
     ColaboradorListResponse,
     CollaboratorPublic,
 )
+from .postulacion_colaborador import (
+    PostulacionColaboradorCreate,
+    PostulacionColaboradorEstadoUpdate,
+    PostulacionColaboradorItem,
+    PostulacionColaboradorListResponse,
+)

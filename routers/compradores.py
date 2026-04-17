@@ -3,12 +3,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from database import get_db
+from deps import require_buyer_id
 from schemas import (
     UsuarioCompradorCreate,
     UsuarioCompradorLogin,
     UsuarioCompradorResponse,
 )
 from services import usuario_comprador_service
+from services.postulacion_colaborador_service import obtener_postulacion_colaborador_mia
 
 router = APIRouter(prefix="/compradores", tags=["Compradores"])
 
@@ -26,6 +28,16 @@ def registrar_comprador(
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.get("/mi-postulacion-colaborador", response_model=dict)
+def mi_postulacion_colaborador(
+    db: Session = Depends(get_db),
+    id_comprador: int = Depends(require_buyer_id),
+):
+    """Última postulación como colaborador asociada al identificador de sesión (ver docs de vinculación por correo)."""
+    data = obtener_postulacion_colaborador_mia(db, id_comprador)
+    return {"postulacion": data}
 
 
 @router.post("/login", response_model=dict)

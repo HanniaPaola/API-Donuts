@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from models.chat_mensaje import ChatMensaje
 from repositories import chat_mensaje_repo
+from repositories import usuario_admin_repo
 
 
 def _participants_from_room(room: str) -> tuple[str, str]:
@@ -18,17 +19,39 @@ def _participants_from_room(room: str) -> tuple[str, str]:
     return parts[0].strip(), parts[1].strip()
 
 
-def actor_allowed_in_room(room: str, actor_nombre: str) -> bool:
+def _contacto_chat_peer_nombre_lower(db: Session) -> str | None:
+    """Mismo criterio que GET /admins/contacto-chat (primer admin por id_admin)."""
+    admins = usuario_admin_repo.get_all(db)
+    if not admins:
+        return None
+    admins.sort(key=lambda a: a.id_admin)
+    return (admins[0].nombre or "").strip().lower()
+
+
+def _actor_es_admin_registrado(db: Session, actor_nombre: str) -> bool:
+    n = (actor_nombre or "").strip()
+    if not n:
+        return False
+    return usuario_admin_repo.get_by_nombre(db, n) is not None
+
+
+def actor_allowed_in_room(room: str, actor_nombre: str, db: Session) -> bool:
     try:
         a, b = _participants_from_room(room)
     except ValueError:
         return False
     actor = actor_nombre.strip().lower()
-    return actor in (a.lower(), b.lower())
+    a_l, b_l = a.lower(), b.lower()
+    if actor in (a_l, b_l):
+        return True
+    peer = _contacto_chat_peer_nombre_lower(db)
+    if peer and peer in (a_l, b_l) and _actor_es_admin_registrado(db, actor_nombre):
+        return True
+    return False
 
 
 def list_mensajes(db: Session, room: str, actor_nombre: str) -> list[dict]:
-    if not actor_allowed_in_room(room, actor_nombre):
+    if not actor_allowed_in_room(room, actor_nombre, db):
         raise PermissionError("No tienes acceso a esta conversación")
     rows: list[ChatMensaje] = chat_mensaje_repo.list_by_room(db, room)
     return [
@@ -44,7 +67,7 @@ def append_mensaje(
     ts_ms: int,
     actor_nombre: str,
 ) -> dict:
-    if not actor_allowed_in_room(room, actor_nombre):
+    if not actor_allowed_in_room(room, actor_nombre, db):
         raise PermissionError("No tienes acceso a esta conversación")
     row = chat_mensaje_repo.create(db, room, actor_nombre, texto.strip(), ts_ms)
     return {

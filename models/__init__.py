@@ -6,4 +6,5 @@ from .carrito_producto import CarritoProducto
 from .pedido import Pedido
 from .pedido_item import PedidoItem
 from .colaborador import Colaborador
+from .postulacion_colaborador import PostulacionColaborador
 from .chat_mensaje import ChatMensaje
