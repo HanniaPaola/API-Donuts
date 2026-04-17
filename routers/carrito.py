@@ -1,6 +1,4 @@
 # routers/carrito.py
-import traceback
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -21,13 +19,6 @@ def obtener_mi_carrito(
         return carrito_service.obtener_carrito(db, id_comprador)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except Exception as e:
-        print(f"Error obtener carrito: {e}")
-        print(traceback.format_exc())
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error al obtener carrito",
-        )
 
 
 @router.post("/agregar", response_model=dict, status_code=status.HTTP_200_OK)
@@ -45,13 +36,6 @@ def agregar_al_carrito(
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception as e:
-        print(f"Error inesperado: {e}")
-        print(traceback.format_exc())
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error al agregar producto: {str(e)}",
-        )
 
 
 @router.delete("/quitar/{id_producto}", response_model=dict)
@@ -64,10 +48,3 @@ def quitar_del_carrito(
         return carrito_service.quitar_del_carrito(db, id_comprador, id_producto)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception as e:
-        print(f"Error quitar producto: {e}")
-        print(traceback.format_exc())
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error al quitar producto del carrito",
-        )

@@ -1,10 +1,16 @@
-from fastapi import FastAPI
+import uuid
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from database import crear_tablas
-from routers import compradores, admins, productos, carrito, pedidos, colaborador
 from fastapi.security import HTTPBearer
 
-# Crear la aplicación con documentación personalizada
+from database import crear_tablas
+from exception_handlers import register_exception_handlers
+from logging_config import setup_logging
+from routers import compradores, admins, productos, carrito, pedidos, colaborador
+
+setup_logging()
+
 app = FastAPI(
     title="API Donuts",
     description="API REST para gestión de tienda de donuts con autenticación JWT",
@@ -13,12 +19,24 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json",
     swagger_ui_parameters={
-        "persistAuthorization": True,  # Mantiene el token después de recargar
-    }
+        "persistAuthorization": True,
+    },
 )
 
-# Configurar seguridad para Swagger
 security = HTTPBearer()
+
+
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next):
+    """Propaga X-Request-ID para correlación en logs y monitoreo."""
+    rid = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+    request.state.request_id = rid
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = rid
+    return response
+
+
+register_exception_handlers(app)
 
 app.add_middleware(
     CORSMiddleware,
@@ -37,19 +55,20 @@ app.include_router(carrito.router)
 app.include_router(pedidos.router)
 app.include_router(colaborador.router)
 
-# Endpoint para la documentación de seguridad
+
 @app.get("/", tags=["Inicio"])
 def raiz():
     return {
         "nombre": "API Donuts",
         "version": "1.0.0",
-        "documentacion": "http://127.0.0.1:8000/docs",
-        "mensaje": "Bienvenido a la API de Donuts"
+        "documentacion": "/docs",
+        "mensaje": "Bienvenido a la API de Donuts",
     }
+
 
 @app.get("/health", tags=["Inicio"])
 def health_check():
     return {
         "status": "ok",
-        "mensaje": "La API está funcionando correctamente"
+        "mensaje": "La API está funcionando correctamente",
     }

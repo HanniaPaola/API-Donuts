@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -20,11 +19,6 @@ def crear_pedido(
         return pedido_service.crear_pedido(db, id_comprador, datos.metodo_pago)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error al crear pedido",
-        )
 
 
 @router.get("/historial", response_model=dict)
@@ -36,11 +30,6 @@ def obtener_mis_pedidos(
         return pedido_service.obtener_historial_pedidos(db, id_comprador)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error al obtener historial de pedidos",
-        )
 
 
 @router.get("/detalle/{id_pedido}", response_model=dict)
@@ -53,8 +42,3 @@ def obtener_detalle_pedido(
         return pedido_service.obtener_detalle_pedido(db, id_pedido, id_comprador)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error al obtener detalle del pedido",
-        )
