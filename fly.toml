@@ -1,6 +1,13 @@
 # Renombra la app tras: fly apps create <nombre>
+#
+# Deploy: el CLI por defecto solo espera ~5m a que la máquina esté "sana". MariaDB + volumen suele tardar más.
+#   fly deploy -a api-donuts --wait-timeout 25m
+# Si ves "lease not found" o "request canceled", reintenta; con máquinas raras: fly machines list -a api-donuts
+#
+# Sin checks HTTP (solo para diagnosticar): comenta el bloque [[http_service.checks]] y vuelve a desplegar; luego mira fly logs.
 app = "api-donuts"
-primary_region = "iad"
+# Debe coincidir con la región donde están tus máquinas y volúmenes (Fly suele usar la de la org o la del primer deploy).
+primary_region = "ams"
 
 [build]
   dockerfile = "Dockerfile"
@@ -15,20 +22,23 @@ primary_region = "iad"
   auto_start_machines = true
   min_machines_running = 1
 
+  # Margen largo: primer arranque con mariadb-install-db en volumen vacío puede llevar varios minutos.
   [[http_service.checks]]
-    interval = "30s"
-    timeout = "10s"
-    grace_period = "90s"
+    interval = "20s"
+    timeout = "15s"
+    grace_period = "600s"
     method = "GET"
     path = "/health"
 
 [[vm]]
-  memory = "2gb"
+  memory = "2048mb"
   cpu_kind = "shared"
   cpus = 1
 
-# Crear antes del primer deploy (misma región que primary_region):
-#   fly volumes create mariadb_data --region iad --size 3
+# Volúmenes: misma región que primary_region. Con MariaDB en la VM, usa 1 máquina y 1 volumen (2 máquinas = 2 BD distintas).
+#   fly scale count 1 -a api-donuts
+#   fly volumes create mariadb_data -a api-donuts --region ams --size 3 -n 1
+# Si Fly exige "ams=2", suele haber 2 máquinas: primero scale count 1, luego un solo volumen.
 [[mounts]]
   source = "mariadb_data"
   destination = "/data"
