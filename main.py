@@ -1,4 +1,7 @@
+import asyncio
+import logging
 import uuid
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,6 +13,31 @@ from logging_config import setup_logging
 from routers import compradores, admins, productos, carrito, pedidos, colaborador, chat
 
 setup_logging()
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Espera a que MariaDB acepte conexiones antes de create_all (evita crash loop en Fly)."""
+    last_exc: BaseException | None = None
+    for attempt in range(30):
+        try:
+            crear_tablas()
+            last_exc = None
+            break
+        except BaseException as exc:
+            last_exc = exc
+            logger.warning(
+                "crear_tablas intento %s/30: %s",
+                attempt + 1,
+                exc,
+            )
+            await asyncio.sleep(2)
+    if last_exc is not None:
+        logger.exception("No se pudo inicializar el esquema en la base de datos")
+        raise last_exc
+    yield
+
 
 app = FastAPI(
     title="API Donuts",
@@ -21,6 +49,7 @@ app = FastAPI(
     swagger_ui_parameters={
         "persistAuthorization": True,
     },
+    lifespan=lifespan,
 )
 
 security = HTTPBearer()
@@ -45,8 +74,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-crear_tablas()
 
 app.include_router(compradores.router)
 app.include_router(admins.router)

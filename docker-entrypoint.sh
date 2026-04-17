@@ -19,12 +19,15 @@ if [ ! -f "${DATADIR}/ibdata1" ] && [ ! -d "${DATADIR}/mysql" ]; then
 fi
 
 echo "[entrypoint] Arrancando MariaDB..."
+# Menor uso de RAM en VMs pequeñas (reduce OOM / reinicios).
 mariadbd \
   --user=mysql \
   --datadir="$DATADIR" \
   --bind-address=127.0.0.1 \
   --skip-name-resolve \
-  --socket="$SOCKET" &
+  --socket="$SOCKET" \
+  --innodb-buffer-pool-size=128M \
+  &
 MYSQLD_PID=$!
 
 for _ in $(seq 1 90); do
