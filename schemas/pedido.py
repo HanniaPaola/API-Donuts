@@ -1,4 +1,3 @@
-# schemas/pedido.py
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
@@ -19,8 +18,8 @@ class PedidoResponse(BaseModel):
     precio_total: float
     metodo_pago: str
     id_comprador: int
-    id_producto: int
-    
+    lineas: Optional[List[dict]] = None
+
     class Config:
         from_attributes = True
         json_schema_extra = {
@@ -30,6 +29,14 @@ class PedidoResponse(BaseModel):
                 "precio_total": 10.00,
                 "metodo_pago": "tarjeta",
                 "id_comprador": 1,
-                "id_producto": 1
+                "lineas": [
+                    {
+                        "id_producto": 1,
+                        "nombre_producto": "Dona chocolate",
+                        "cantidad": 2,
+                        "precio_unitario": 25.0,
+                        "subtotal": 50.0,
+                    }
+                ],
             }
         }

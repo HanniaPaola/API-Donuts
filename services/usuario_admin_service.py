@@ -51,15 +51,16 @@ def login_admin(db: Session, identificador: str, contrasena: str) -> Dict:
     if not verify_password(contrasena, admin.contrasena):
         raise ValueError("Contraseña incorrecta")
 
-    token = create_access_token({"sub": str(admin.id_admin)})
+    token = create_access_token({"sub": str(admin.id_admin), "role": "admin"})
     
     return {
         "id": admin.id_admin,
         "email": admin.nombre,
         "display_name": admin.nombre,
         "nombre": admin.nombre,
+        "role": "admin",
         "token": token,
-        "tipo_token": "bearer"
+        "tipo_token": "bearer",
     }
 
 def obtener_admin(db: Session, id_admin: int) -> Dict:

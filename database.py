@@ -34,4 +34,5 @@ def get_db():
         db.close()
 
 def crear_tablas():
+    import models  # noqa: F401 — registra ORM en Base.metadata antes de create_all
     Base.metadata.create_all(bind=engine)

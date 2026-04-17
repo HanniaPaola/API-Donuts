@@ -4,4 +4,5 @@ from .producto import Producto
 from .carrito import Carrito
 from .carrito_producto import CarritoProducto
 from .pedido import Pedido
+from .pedido_item import PedidoItem
 from .colaborador import Colaborador

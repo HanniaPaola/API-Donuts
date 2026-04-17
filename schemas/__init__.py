@@ -27,5 +27,6 @@ from .colaborador import (
     ColaboradorResponse,
     ColaboradorCreate,
     ColaboradorUpdate,
-    ColaboradorListResponse
+    ColaboradorListResponse,
+    CollaboratorPublic,
 )

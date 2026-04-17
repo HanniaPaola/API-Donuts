@@ -56,15 +56,18 @@ def login_comprador(db: Session, identificador: str, contrasena: str) -> Dict:
     if not verify_password(contrasena, comprador.contrasena):
         raise ValueError("Contraseña incorrecta")
 
-    token = create_access_token({"sub": str(comprador.id_comprador)})
+    token = create_access_token(
+        {"sub": str(comprador.id_comprador), "role": "buyer"}
+    )
     
     return {
         "id": comprador.id_comprador,
         "email": comprador.nombre,
         "display_name": comprador.nombre,
         "nombre": comprador.nombre,
+        "role": "buyer",
         "token": token,
-        "tipo_token": "bearer"
+        "tipo_token": "bearer",
     }
 
 def obtener_comprador(db: Session, id_comprador: int) -> Dict:

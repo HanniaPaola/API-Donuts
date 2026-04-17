@@ -1,10 +1,12 @@
 from sqlalchemy import Column, Integer, String, Boolean
 from database import Base
 
+
 class Colaborador(Base):
     __tablename__ = "colaboradores"
-    
+
     id = Column(Integer, primary_key=True, autoincrement=True)
+    email = Column(String(120), unique=True, nullable=False, index=True)
     display_name = Column(String(100), nullable=False)
     handle = Column(String(50), unique=True, nullable=False)
     bio = Column(String(500), nullable=True)

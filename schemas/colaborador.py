@@ -1,9 +1,11 @@
-from pydantic import BaseModel
-from typing import List, Optional, Dict
+from pydantic import BaseModel, ConfigDict, Field
+from typing import List, Optional
 
 
 class ColaboradorBase(BaseModel):
     """Base schema for Colaborador - used for create/update operations"""
+
+    email: str
     display_name: str
     handle: str
     bio: Optional[str] = None
@@ -16,11 +18,14 @@ class ColaboradorBase(BaseModel):
 
 class ColaboradorCreate(ColaboradorBase):
     """Schema for creating a new collaborator"""
+
     pass
 
 
 class ColaboradorUpdate(BaseModel):
     """Schema for updating collaborator - all fields optional"""
+
+    email: Optional[str] = None
     display_name: Optional[str] = None
     handle: Optional[str] = None
     bio: Optional[str] = None
@@ -32,15 +37,34 @@ class ColaboradorUpdate(BaseModel):
 
 
 class ColaboradorResponse(ColaboradorBase):
-    """Schema for API responses - includes id"""
+    """Schema for API responses - includes id (entero, legado interno)"""
+
     id: int
 
     class Config:
-        from_attributes = True  # For SQLAlchemy model conversion
+        from_attributes = True
+
+
+class CollaboratorPublic(BaseModel):
+    """Formato alineado con el frontend DoniDeli (camelCase, id string)."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    email: str
+    displayName: str
+    handle: str
+    bio: Optional[str] = None
+    specialty: str
+    productCount: int
+    salesCount: int
+    isOnline: bool
+    status: str
 
 
 class ColaboradorListResponse(BaseModel):
     """Schema for list endpoints"""
+
     colaboradores: List[ColaboradorResponse]
     total: int
 
