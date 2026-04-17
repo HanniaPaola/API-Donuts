@@ -7,7 +7,7 @@ from fastapi.security import HTTPBearer
 from database import crear_tablas
 from exception_handlers import register_exception_handlers
 from logging_config import setup_logging
-from routers import compradores, admins, productos, carrito, pedidos, colaborador
+from routers import compradores, admins, productos, carrito, pedidos, colaborador, chat
 
 setup_logging()
 
@@ -54,6 +54,7 @@ app.include_router(productos.router)
 app.include_router(carrito.router)
 app.include_router(pedidos.router)
 app.include_router(colaborador.router)
+app.include_router(chat.router)
 
 
 @app.get("/", tags=["Inicio"])

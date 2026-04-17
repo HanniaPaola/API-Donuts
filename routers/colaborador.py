@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from schemas.colaborador import ColaboradorCreate, ColaboradorUpdate, CollaboratorPublic
 from services.colaborador_service import ColaboradorService
+from services.producto_service import obtener_productos_menu_colaborador
 
 router = APIRouter(prefix="/colaboradores", tags=["Colaboradores"])
 
@@ -38,6 +39,15 @@ def create_colaborador(colaborador_data: ColaboradorCreate, db: Session = Depend
         return ColaboradorService.create_colaborador(db, colaborador_data)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.get("/{colaborador_id}/productos", response_model=List[dict])
+def listar_menu_colaborador(colaborador_id: int, db: Session = Depends(get_db)):
+    """Productos asignados al menú de un colaborador (`id_colaborador` en tabla producto)."""
+    try:
+        return obtener_productos_menu_colaborador(db, colaborador_id)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
 
 @router.get("/{colaborador_id}", response_model=CollaboratorPublic)

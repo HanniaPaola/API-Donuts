@@ -12,6 +12,15 @@ from services import producto_service
 router = APIRouter(prefix="/productos", tags=["Productos"])
 
 
+@router.get("/mios", response_model=List[dict])
+def mis_productos(
+    db: Session = Depends(get_db),
+    id_admin: int = Depends(require_admin_id),
+):
+    """Productos creados por el administrador autenticado (JWT)."""
+    return producto_service.obtener_mis_productos_admin(db, id_admin)
+
+
 @router.get("/", response_model=List[dict])
 def listar_productos(db: Session = Depends(get_db)):
     return producto_service.obtener_todos_productos(db)
@@ -39,6 +48,7 @@ def crear_producto(
             datos.categoria,
             datos.stock_disponible,
             id_admin,
+            datos.id_colaborador,
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

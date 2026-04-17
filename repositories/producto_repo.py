@@ -9,17 +9,35 @@ def get_by_id(db: Session, id_producto: int) -> Optional[Producto]:
 def get_all(db: Session) -> List[Producto]:
     return db.query(Producto).all()
 
+def get_by_admin_id(db: Session, id_admin: int) -> List[Producto]:
+    return db.query(Producto).filter(Producto.id_admin == id_admin).all()
+
+def get_by_colaborador_id(db: Session, id_colaborador: int) -> List[Producto]:
+    return (
+        db.query(Producto)
+        .filter(Producto.id_colaborador == id_colaborador)
+        .all()
+    )
+
 def get_by_categoria(db: Session, categoria: str) -> List[Producto]:
     return db.query(Producto).filter(Producto.categoria == categoria).all()
 
-def create(db: Session, nombre: str, precio: float, categoria: str, 
-           stock_disponible: int, id_admin: int) -> Producto:
+def create(
+    db: Session,
+    nombre: str,
+    precio: float,
+    categoria: str,
+    stock_disponible: int,
+    id_admin: int,
+    id_colaborador: Optional[int] = None,
+) -> Producto:
     nuevo_producto = Producto(
         nombre=nombre,
         precio=precio,
         categoria=categoria,
         stock_disponible=stock_disponible,
-        id_admin=id_admin
+        id_admin=id_admin,
+        id_colaborador=id_colaborador,
     )
     db.add(nuevo_producto)
     db.commit()
@@ -30,8 +48,7 @@ def update(db: Session, id_producto: int, datos: Dict) -> Optional[Producto]:
     producto = get_by_id(db, id_producto)
     if producto:
         for key, value in datos.items():
-            if value is not None:
-                setattr(producto, key, value)
+            setattr(producto, key, value)
         db.commit()
         db.refresh(producto)
     return producto

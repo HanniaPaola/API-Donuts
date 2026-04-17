@@ -51,12 +51,15 @@ CREATE TABLE IF NOT EXISTS producto (
     categoria VARCHAR(100),
     stock_disponible INT DEFAULT 0,
     id_admin INT NOT NULL,
+    id_colaborador INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_producto_admin FOREIGN KEY (id_admin) REFERENCES usuario_admin(id_admin) ON DELETE CASCADE,
+    CONSTRAINT fk_producto_colaborador FOREIGN KEY (id_colaborador) REFERENCES colaboradores(id) ON DELETE SET NULL,
     INDEX idx_nombre (nombre),
     INDEX idx_categoria (categoria),
-    INDEX idx_id_admin (id_admin)
+    INDEX idx_id_admin (id_admin),
+    INDEX idx_id_colaborador (id_colaborador)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ==================== CARRITO ====================
@@ -113,6 +116,26 @@ CREATE TABLE IF NOT EXISTS pedido_items (
     INDEX idx_id_pedido (id_pedido),
     INDEX idx_id_producto (id_producto)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==================== DATOS INICIALES: USUARIOS (login local / DoniDeli) ====================
+-- Contraseñas: comprador@donideli.com → buyer123 | admin@donideli.com → admin123 (bcrypt)
+INSERT IGNORE INTO usuario_admin (nombre, contrasena) VALUES
+(
+  'admin@donideli.com',
+  '$2b$12$ML4j1HTJLi/.jdfH7xcMuOPA8MPu5E4zKh3II4IU3zez8V30Mr4WS'
+);
+
+INSERT IGNORE INTO usuario_comprador (nombre, contrasena) VALUES
+(
+  'comprador@donideli.com',
+  '$2b$12$3MMF4fh7SiI9/9OMXVbt9eQcpWJumxV.UbDz7kfKIGJUivv5SKlN2'
+);
+
+INSERT INTO carrito (id_comprador, subtotal, cantidad_items)
+SELECT c.id_comprador, 0, 0
+FROM usuario_comprador c
+WHERE c.nombre = 'comprador@donideli.com'
+  AND NOT EXISTS (SELECT 1 FROM carrito k WHERE k.id_comprador = c.id_comprador);
 
 -- ==================== DATOS INICIALES: COLABORADORES ====================
 INSERT INTO colaboradores (

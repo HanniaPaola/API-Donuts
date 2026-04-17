@@ -13,7 +13,9 @@ class Producto(Base):
     categoria = Column(String(100))
     stock_disponible = Column(Integer, default=0)
     id_admin = Column(Integer, ForeignKey("usuario_admin.id_admin"), nullable=False)
+    id_colaborador = Column(Integer, ForeignKey("colaboradores.id"), nullable=True, index=True)
 
     admin = relationship("UsuarioAdmin", back_populates="productos")
+    colaborador = relationship("Colaborador", back_populates="productos")
     carrito_productos = relationship("CarritoProducto", back_populates="producto")
     pedido_items = relationship("PedidoItem", back_populates="producto")

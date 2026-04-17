@@ -7,6 +7,10 @@ class ProductoCreate(BaseModel):
     precio: float = Field(..., gt=0, description="Precio del producto (debe ser mayor a 0)")
     categoria: Optional[str] = Field(None, max_length=100, description="Categoría del producto")
     stock_disponible: int = Field(default=0, ge=0, description="Stock disponible (no puede ser negativo)")
+    id_colaborador: Optional[int] = Field(
+        None,
+        description="Si se indica, el producto aparece en el menú de ese colaborador",
+    )
     
     class Config:
         json_schema_extra = {
@@ -40,6 +44,7 @@ class ProductoResponse(BaseModel):
     categoria: Optional[str]
     stock_disponible: int
     id_admin: int
+    id_colaborador: Optional[int] = None
     
     class Config:
         from_attributes = True

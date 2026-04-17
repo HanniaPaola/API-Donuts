@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy.orm import relationship
 from database import Base
 
 
@@ -15,3 +16,5 @@ class Colaborador(Base):
     sales_count = Column(Integer, default=0)
     is_online = Column(Boolean, default=False)
     status = Column(String(20), default="active")
+
+    productos = relationship("Producto", back_populates="colaborador")
