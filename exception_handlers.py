@@ -16,21 +16,39 @@ def _request_id(request: Request) -> str:
     return getattr(request.state, "request_id", str(uuid.uuid4()))
 
 
+def _summary_message(detail: Any) -> str:
+    """Texto breve para logs y campo error.message."""
+    if isinstance(detail, str):
+        return detail
+    if isinstance(detail, list) and detail:
+        return "Error de validación en la solicitud"
+    if isinstance(detail, dict):
+        return str(detail.get("msg", detail)) if detail else "Error en la solicitud"
+    return "Error en la solicitud"
+
+
 def error_payload(
     code: str,
-    message: Any,
     request_id: str,
     *,
-    details: Any | None = None,
-) -> dict:
-    err: dict[str, Any] = {
-        "code": code,
-        "message": message,
-        "request_id": request_id,
+    detail: Any,
+    message: str | None = None,
+) -> dict[str, Any]:
+    """
+    Respuesta unificada:
+    - detail: mismo criterio que FastAPI (string, lista de errores 422, etc.)
+    - error: metadatos para monitoreo (code, message, request_id, detail duplicado)
+    """
+    msg = message if message is not None else _summary_message(detail)
+    return {
+        "detail": detail,
+        "error": {
+            "code": code,
+            "message": msg,
+            "request_id": request_id,
+            "detail": detail,
+        },
     }
-    if details is not None:
-        err["details"] = details
-    return {"error": err}
 
 
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
@@ -47,7 +65,12 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
     return JSONResponse(
         status_code=exc.status_code,
         headers=dict(headers) if headers else {},
-        content=error_payload(f"HTTP_{exc.status_code}", exc.detail, rid),
+        content=error_payload(
+            f"HTTP_{exc.status_code}",
+            rid,
+            detail=exc.detail,
+            message=_summary_message(exc.detail),
+        ),
     )
 
 
@@ -67,9 +90,9 @@ async def validation_exception_handler(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content=error_payload(
             "VALIDATION_ERROR",
-            "Error de validación en la solicitud",
             rid,
-            details=errors,
+            detail=errors,
+            message="Error de validación en la solicitud",
         ),
     )
 
@@ -83,12 +106,16 @@ async def integrity_error_handler(request: Request, exc: IntegrityError) -> JSON
         rid,
         exc.orig if hasattr(exc, "orig") else str(exc),
     )
+    detail_txt = (
+        "Conflicto con datos existentes (clave duplicada o restricción de integridad)"
+    )
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT,
         content=error_payload(
             "CONFLICT",
-            "Conflicto con datos existentes (clave duplicada o restricción)",
             rid,
+            detail=detail_txt,
+            message=detail_txt,
         ),
     )
 
@@ -102,12 +129,16 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
         rid,
         exc_info=exc,
     )
+    detail_txt = (
+        "Ocurrió un error inesperado. Intente más tarde o contacte soporte."
+    )
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=error_payload(
             "INTERNAL_ERROR",
-            "Ocurrió un error inesperado. Intente más tarde o contacte soporte.",
             rid,
+            detail=detail_txt,
+            message=detail_txt,
         ),
     )
 
